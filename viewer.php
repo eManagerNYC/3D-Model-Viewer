@@ -44,7 +44,7 @@ function ModelViewer( $atts ) {
     'url' => plugins_url('assets/Project2.rvt.js'),
   ), $atts, 'model' ) );
 
-  return '<div class="row inline trans">
+  echo '<div class="row inline trans">
 
     <div class="col-md-2 padding text-center" style="padding-left:-10px;"><a onclick="resetCamera()">Reset View</a></div>
     <div class="col-md-2 padding text-center"><a onclick="zoomExtents()">Zoom Extents</a></div>
