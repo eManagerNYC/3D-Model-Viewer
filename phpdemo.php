@@ -3,6 +3,58 @@
 * Use PHP variables
 */
 $url = 'assets/Project2.rvt.js';
+
+function get_ip() {
+    // http://chriswiegman.com/2014/05/getting-correct-ip-address-php/
+    //Just get the headers if we can or else use the SERVER global
+    if ( function_exists( 'apache_request_headers' ) ) {
+      $headers = apache_request_headers();
+    } else {
+      $headers = $_SERVER;
+    }
+    //Get the forwarded IP if it exists
+    if ( array_key_exists( 'X-Forwarded-For', $headers ) && filter_var( $headers['X-Forwarded-For'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+      $the_ip = $headers['X-Forwarded-For'];
+    } elseif ( array_key_exists( 'HTTP_X_FORWARDED_FOR', $headers ) && filter_var( $headers['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 )
+    ) {
+      $the_ip = $headers['HTTP_X_FORWARDED_FOR'];
+    } else {
+      $the_ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
+    }
+  return $the_ip;
+
+function geoCheckIP($ip) {
+  //check, if the provided ip is valid
+  if(!filter_var($ip, FILTER_VALIDATE_IP)) {
+    throw new InvalidArgumentException("IP is not valid");
+   }
+  //contact ip-server
+  $response=@file_get_contents('http://www.netip.de/search?query='.$ip);
+  if (empty($response)) {
+    throw new InvalidArgumentException("Error contacting Geo-IP-Server");
+  }
+  //Array containing all regex-patterns necessary to extract ip-geoinfo from page
+  $patterns=array();
+  $patterns["domain"] = '#Domain: (.*?)&nbsp;#i';
+  $patterns["country"] = '#Country: (.*?)&nbsp;#i';
+  $patterns["state"] = '#State/Region: (.*?)<br#i';
+  $patterns["town"] = '#City: (.*?)<br#i';
+  //Array where results will be stored
+  $ipInfo=array();
+  //check response from ipserver for above patterns
+  foreach ($patterns as $key => $pattern) {
+    //store the result in array
+    $ipInfo[$key] = preg_match($pattern,$response,$value) && !empty($value[1]) ? $value[1] : 'not found';
+  }
+  /*I've included the substr function for Country to exclude the abbreviation (UK, US, etc..)
+  To use the country abbreviation, simply modify the substr statement to:
+  substr($ipInfo["country"], 0, 3)
+  */
+    $ipdata = $ipInfo["town"]. ", ".$ipInfo["state"].", ".substr($ipInfo["country"], 4);
+  return $ipdata;
+}
+
+$clientloc = geoCheckIP(get_ip());
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,6 +77,7 @@ $url = 'assets/Project2.rvt.js';
 
   <body>
 <?php
+    echo '<div style display="none" >'.$cleintloc.'</div>';
     echo '<div class="row inline trans">
 
     <div class="col-md-2 padding text-center" style="padding-left:-10px;"><a onclick="resetCamera()">Reset View</a></div>
