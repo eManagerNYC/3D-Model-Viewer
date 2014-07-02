@@ -12,28 +12,34 @@ Credits: va3c - http://va3c.github.io/
 /* Enqueue scripts
 /*-------------------------------------------------------*/
 function modelscripts() {
-	wp_register_script( 'jquery', plugins_url('assets/jquery-1.10.2.min.js', __FILE__), array(), null, false );
-	wp_register_script( 'bootstrap', plugins_url('assets/bootstrap.min.js', __FILE__), array(), null, false );
-	wp_register_script( 'jasny', plugins_url('assets/jasny-bootstrap.min.js', __FILE__), array(), null, false );
+  /*Register*/
 	wp_register_script( 'threejs', plugins_url('assets/three.min.js', __FILE__), array(), null, false );
-	wp_register_script( 'TrackballControls', plugins_url('assets/TrackballControls.js ', __FILE__), array(), null, false );
+  wp_register_script( 'OrbitControls', plugins_url('assets/OrbitControls.js', __FILE__), array(), null, false );
 	wp_register_script( 'stats', plugins_url('assets/stats.min.js', __FILE__), array(), null, false );
-	wp_register_script( 'datgui', plugins_url('assets/dat.gui.js', __FILE__), array(), null, false );
+  wp_register_script( 'ColladaLoader', plugins_url('assets/ColladaLoader.js', __FILE__), array(), null, false );
+	wp_register_script( 'va3c-viewer-aa', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-at', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-cc', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-pl', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-fo', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-bu', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'va3c-viewer-su', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
+  wp_register_script( 'firstperson-theo', plugins_url('assets/first-person-controls-theo.js', __FILE__), array(), null, false );
 	wp_register_script( 'sun-position', plugins_url('assets/sun-position.js', __FILE__), array(), null, false );
-	wp_register_script( 'va3c-viewer', plugins_url('assets/va3c-viewer.js', __FILE__), array(), null, false );
-	wp_register_script( 'ColladaLoader', plugins_url('assets/ColladaLoader.js', __FILE__), array(), null, false );
-	wp_register_script( 'OrbitControls', plugins_url('assets/OrbitControls.js', __FILE__), array(), null, false );
-	wp_enqueue_script('jquery');
-	wp_enqueue_script('bootstrap');
-	wp_enqueue_script('jasny');
+  /* Load em in */
 	wp_enqueue_script('threejs');
-	wp_enqueue_script('TrackballControls');
-	wp_enqueue_script('stats');
-	wp_enqueue_script('datgui');
-	wp_enqueue_script('sun-position');
-	wp_enqueue_script('va3c-viewer');
-	wp_enqueue_script('ColladaLoader');
 	wp_enqueue_script('OrbitControls');
+	wp_enqueue_script('stats');
+	wp_enqueue_script('ColladaLoader');
+  wp_enqueue_script('va3c-viewer-aa');
+  wp_enqueue_script('va3c-viewer-at');
+  wp_enqueue_script('va3c-viewer-cc');
+  wp_enqueue_script('va3c-viewer-pl');
+  wp_enqueue_script('va3c-viewer-fo');
+  wp_enqueue_script('va3c-viewer-bu');
+  wp_enqueue_script('va3c-viewer-su');
+  wp_enqueue_script('firstperson-theo');
+	wp_enqueue_script('sun-position');
 }
 add_action( 'wp_enqueue_scripts', 'modelscripts' );
 /*-------------------------------------------------------*/
@@ -57,6 +63,7 @@ function get_ip() {
       $the_ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
     }
   return $the_ip;
+}
 
 function geoCheckIP($ip) {
   //check, if the provided ip is valid
@@ -94,32 +101,92 @@ function geoCheckIP($ip) {
 function ModelViewer( $atts ) {
   extract( shortcode_atts( array(
     'url' => plugins_url('assets/Project2.rvt.js'),
-    'loc' => 'New York';
+    'loc' => 'New York',
+    'width' => '100%',
+    'height' => '50em'
   ), $atts, 'model' ) );
+
   if ($loc == 'ip') {
   		$clientloc = geoCheckIP(get_ip());
   }
-  echo '<div class="row inline trans">
+  
+echo '<canvas width="'.$width.'" height="'.$height.'"></canvas>';
 
-    <div class="col-md-2 padding text-center" style="padding-left:-10px;"><a onclick="resetCamera()">Reset View</a></div>
-    <div class="col-md-2 padding text-center"><a onclick="zoomExtents()">Zoom Extents</a></div>
-    <div class="col-md-2 padding text-center"><select class="styled-select" onchange="getComboA(this);">
-          <option value="New York">New York</option>
-          <option value="Sao Paulo">Sao Paulo</option>
-          <option value="Paris">Paris</option>
-          <option value="Tokyo">Tokyo</option>
-          <option value="Moscow">Moscow</option>
-      </select></div>
-    <div class="col-md-2 padding text-center">Month 1-12<input type="range" name="points" id="month" min="1" max="12" step="1" value="5" onchange="updateLight()"></div>
-    <div class="col-md-2 padding text-center">Day 1-31<input type="range" name="points" id="day" min="1" max="31" step="1" value="18" onchange="updateLight()"></div>
-    <div class="col-md-2 padding text-center" style="padding-right:-10px;">Hour 0-24<input type="range" name="points" id="hour" min="1" max="24" step="1" value="24" onchange="updateLight()"></div>
-<hr>
+echo "<script>
+// Theo Armour ~ 2014-05-27 ~ MIT License
+// every name space used below relates to a JavaScript file with the same name suffix
 
-    <script>
-      var fname = "'.$url.'";
-      init(fname);
-      animate();
-    </script>
-</div>';
+  var fname = '".$url."';
+  var targetList;
+
+  var clock = new THREE.Clock();
+
+  init();
+  animate();
+
+  function init() {
+    container = document.body.appendChild( document.createElement( 'div' ) );
+
+    V3AA.addCSS();
+
+    V3AA.addHeader();
+    V3AA.addMenu();
+
+    V3PL.parsePermalink();
+    V3FO.addFileOpen();
+    V3AA.addThreeJS();
+    V3PL.addPermalinks();
+    V3BU.addBundleOpen();
+    V3CC.addCameraControls();
+    V3AT.addAttributes();
+    V3SU.addSunlight();
+    V3AA.addAbout();
+    V3AA.addFooter();
+
+// if a permalink is found use it, otherwise load the default
+    if ( V3PL.url ) {
+      V3FO.loadURL( V3PL.url );
+    } else {
+      V3FO.loadFile( fname );
+    }
+
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    document.addEventListener( 'click', onDocumentMouseClick, false );
+    window.addEventListener('mouseup', mouseUp, false);
+  }
+
+  function animate() {
+    requestAnimationFrame( animate );
+    renderer.render( scene, camera );
+    controls.update( clock.getDelta() );
+    stats.update();
+
+    if ( !controls.heightSpeed ) return;
+    msg.innerHTML = 'Debug:<br>' +
+      'Freeze: ' + controls.freeze + '<br>' +
+      'lookSpeed: ' + controls.lookSpeed.toFixed(3) + ' movementSpeed: ' + controls.movementSpeed + '<br>' +
+      'lon ' + controls.lon.toFixed(3) + ' lat ' + controls.lat.toFixed(3) + '<br>' +0
+      'movementSpeed ' + controls.movementSpeed + ' actualMoveSpeed '  + actualMoveSpeed.toFixed(2) + '<br>' +
+    '';
+  }
+
+</script>";
+
 }
 add_shortcode( 'model', 'ModelViewer' );
+
+function ModelFrame() {
+  /* Load as an object with iframe fallback */
+  echo '<!--[if !IE]>-->
+   <object data="'.plugins_url('va3c-viewer-html5-r2.html').'" type="text/html" style="width:'.$width.';height:'.$height.';" class="va3c" id="va3c">
+      <p>Sorry. This content cannot be rendered (non-IE object).  Stop living in the past and upgrade to <a href="http://www.abetterbrowser.com">a better browser</a></p>
+   </object>
+  <!--<![endif]-->
+
+  <!--[if IE]>
+    <iframe src="'.plugins_url('va3c-viewer-html5-r2.html').'" type="text/html" style="width:'.$width.';height:'.$height.'; border: 0" class="va3c" id="va3c">
+       <p>Sorry. This content cannot be rendered (IE iframe).  Stop living in the past and upgrade to <a href="http://www.abetterbrowser.com">a better browser</a></p>
+    </iframe>
+  <![endif]-->';
+}
+add_shortcode( 'va3c', 'ModelFrame' );
