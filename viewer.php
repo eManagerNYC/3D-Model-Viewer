@@ -41,7 +41,6 @@ function modelscripts() {
   wp_enqueue_script('firstperson-theo');
 	wp_enqueue_script('sun-position');
 }
-add_action( 'wp_enqueue_scripts', 'modelscripts' );
 /*-------------------------------------------------------*/
 /* Add Clientside Location from IP
 /*-------------------------------------------------------*/
@@ -109,7 +108,7 @@ function ModelViewer( $atts ) {
   if ($loc == 'ip') {
   		$clientloc = geoCheckIP(get_ip());
   }
-  
+add_action( 'wp_enqueue_scripts', 'modelscripts' );
 echo '<canvas width="'.$width.'" height="'.$height.'"></canvas>';
 
 echo "<script>
@@ -175,18 +174,19 @@ echo "<script>
 }
 add_shortcode( 'model', 'ModelViewer' );
 
-function ModelFrame() {
-  /* Load as an object with iframe fallback */
-  echo '<!--[if !IE]>-->
-   <object data="'.plugins_url('va3c-viewer-html5-r2.html').'" type="text/html" style="width:'.$width.';height:'.$height.';" class="va3c" id="va3c">
-      <p>Sorry. This content cannot be rendered (non-IE object).  Stop living in the past and upgrade to <a href="http://www.abetterbrowser.com">a better browser</a></p>
-   </object>
-  <!--<![endif]-->
-
-  <!--[if IE]>
-    <iframe src="'.plugins_url('va3c-viewer-html5-r2.html').'" type="text/html" style="width:'.$width.';height:'.$height.'; border: 0" class="va3c" id="va3c">
-       <p>Sorry. This content cannot be rendered (IE iframe).  Stop living in the past and upgrade to <a href="http://www.abetterbrowser.com">a better browser</a></p>
-    </iframe>
-  <![endif]-->';
+function ModelFrame( $atts ) {
+  extract( shortcode_atts( array(
+    'type' => 'object',
+    'width' => '100%',
+    'height' => '50em'
+  ), $atts, 'va3c' ) );
+  $error = '<p>Sorry. This content cannot be rendered.  Stop living in the past and upgrade to <a href="http://www.abetterbrowser.com">a better browser</a></p>';
+  /* Load as an object */
+  if ($type === 'object'){
+    echo '<object data="'.plugins_url('va3c-viewer-html5-r2.html', __FILE__).'" type="text/html" style="width:'.$width.'; height:'.$height.'" class="va3c" id="va3c">'.$error.'</object>';
+  }
+  if ($type === 'frame'){
+    echo '<iframe src="'.plugins_url('va3c-viewer-html5-r2.html', __FILE__).'" type="text/html" style="width:'.$width.'; height:'.$height.'; border: 0" class="va3c" id="va3c">'.$error.'</iframe>';
+  }
 }
 add_shortcode( 'va3c', 'ModelFrame' );
