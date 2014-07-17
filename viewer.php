@@ -41,6 +41,7 @@ function modelscripts() {
   wp_enqueue_script('firstperson-theo');
 	wp_enqueue_script('sun-position');
 }
+add_action('wp_enqueue_scripts','modelscripts');
 /*-------------------------------------------------------*/
 /* Add Clientside Location from IP
 /*-------------------------------------------------------*/
