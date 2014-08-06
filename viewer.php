@@ -9,40 +9,6 @@ Author URI: http://www.blackreit.com
 Credits: va3c - http://va3c.github.io/
 */
 /*-------------------------------------------------------*/
-/* Enqueue scripts
-/*-------------------------------------------------------*/
-function modelscripts() {
-  /*Register*/
-	wp_register_script( 'threejs', plugins_url('assets/three.min.js', __FILE__), array(), null, false );
-  wp_register_script( 'OrbitControls', plugins_url('assets/OrbitControls.js', __FILE__), array(), null, false );
-	wp_register_script( 'stats', plugins_url('assets/stats.min.js', __FILE__), array(), null, false );
-  wp_register_script( 'ColladaLoader', plugins_url('assets/ColladaLoader.js', __FILE__), array(), null, false );
-	wp_register_script( 'va3c-viewer-aa', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-at', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-cc', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-pl', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-fo', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-bu', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'va3c-viewer-su', plugins_url('assets/va3c-viewer-v3aa.js', __FILE__), array(), null, false );
-  wp_register_script( 'firstperson-theo', plugins_url('assets/first-person-controls-theo.js', __FILE__), array(), null, false );
-	wp_register_script( 'sun-position', plugins_url('assets/sun-position.js', __FILE__), array(), null, false );
-  /* Load em in */
-	wp_enqueue_script('threejs');
-	wp_enqueue_script('OrbitControls');
-	wp_enqueue_script('stats');
-	wp_enqueue_script('ColladaLoader');
-  wp_enqueue_script('va3c-viewer-aa');
-  wp_enqueue_script('va3c-viewer-at');
-  wp_enqueue_script('va3c-viewer-cc');
-  wp_enqueue_script('va3c-viewer-pl');
-  wp_enqueue_script('va3c-viewer-fo');
-  wp_enqueue_script('va3c-viewer-bu');
-  wp_enqueue_script('va3c-viewer-su');
-  wp_enqueue_script('firstperson-theo');
-	wp_enqueue_script('sun-position');
-}
-add_action('wp_enqueue_scripts','modelscripts');
-/*-------------------------------------------------------*/
 /* Add Clientside Location from IP
 /*-------------------------------------------------------*/
 function get_ip() {
@@ -77,8 +43,8 @@ function geoCheckIP($ip) {
   }
   //Array containing all regex-patterns necessary to extract ip-geoinfo from page
   $patterns=array();
-  $patterns["domain"] = '#Domain: (.*?)&nbsp;#i';
-  $patterns["country"] = '#Country: (.*?)&nbsp;#i';
+  $patterns["domain"] = '#Domain: (.*?) #i';
+  $patterns["country"] = '#Country: (.*?) #i';
   $patterns["state"] = '#State/Region: (.*?)<br#i';
   $patterns["town"] = '#City: (.*?)<br#i';
   //Array where results will be stored
@@ -99,83 +65,99 @@ function geoCheckIP($ip) {
 /* 3d Modelv viewer
 /*-------------------------------------------------------*/
 function ModelViewer( $atts ) {
+  //wp_register_script( 'Detector', plugins_url('assets/Detector.js', __FILE__), array(), null, false );
+	//wp_register_script( 'threejs', plugins_url('assets/three.min.js', __FILE__), array(), null, false );
+  //wp_register_script( 'TrackballControls', plugins_url('assets/TrackballControls.js', __FILE__), array(), null, false );
+  //wp_enqueue_script('Detector');
+  //wp_enqueue_script('threejs');
+  //wp_enqueue_script('TrackballControls');
   extract( shortcode_atts( array(
-    'url' => plugins_url('assets/Project2.rvt.js'),
+    'url' => plugins_url('assets/WaltHeadLo.js', __FILE__),
     'loc' => 'New York',
-    'width' => '100%',
-    'height' => '50em'
+    'width' => '800',
+    'height' => '600'
   ), $atts, 'model' ) );
 
   if ($loc == 'ip') {
   		$clientloc = geoCheckIP(get_ip());
   }
-add_action( 'wp_enqueue_scripts', 'modelscripts' );
-echo '<canvas width="'.$width.'" height="'.$height.'"></canvas>';
 
-echo "<script>
-// Theo Armour ~ 2014-05-27 ~ MIT License
-// every name space used below relates to a JavaScript file with the same name suffix
+  echo '<script type="text/javascript" src='.plugins_url('/assets/Detector.js', __FILE__).' ></script>';
+  echo '<script type="text/javascript" src='.plugins_url('/assets/three.min.js', __FILE__).' ></script>';
+  echo '<script type="text/javascript" src='.plugins_url('/assets/TrackballControls.js', __FILE__).' ></script>';
+  echo '<script type="text/javascript" src='.plugins_url('/assets/stats.min.js', __FILE__).' ></script>';
+  echo '<div id="threejs" style="position: relative; border: 2px solid black">';
 
-  var fname = '".$url."';
-  var targetList;
+  echo '<script>
+    var renderer, stats, scene, camera, controls;
 
-  var clock = new THREE.Clock();
+    init();
+    animate();
 
-  init();
-  animate();
+    function init() {
 
-  function init() {
-    container = document.body.appendChild( document.createElement( 'div' ) );
+      var elem, geometry, material, mesh;
 
-    V3AA.addCSS();
+      if ( ! Detector.webgl ) {
+        renderer = new THREE.CanvasRenderer( { alpha: 1, antialias: true, clearColor: 0xffffff  } );
+      } else {
+        renderer = new THREE.WebGLRenderer( { alpha: 1, antialias: true, clearColor: 0xffffff } );
+      }
+      renderer.setSize( '.$width.', '.$height.' );
 
-    V3AA.addHeader();
-    V3AA.addMenu();
+      stats = new Stats();
+      stats.domElement.style.cssText = "position: absolute; right: 0; top: 0; zIndex: 100;";
 
-    V3PL.parsePermalink();
-    V3FO.addFileOpen();
-    V3AA.addThreeJS();
-    V3PL.addPermalinks();
-    V3BU.addBundleOpen();
-    V3CC.addCameraControls();
-    V3AT.addAttributes();
-    V3SU.addSunlight();
-    V3AA.addAbout();
-    V3AA.addFooter();
+      elem = document.getElementById( "threejs" );
+      elem.appendChild( renderer.domElement );
+      elem.appendChild( stats.domElement );
+      scene = new THREE.Scene();
 
-// if a permalink is found use it, otherwise load the default
-    if ( V3PL.url ) {
-      V3FO.loadURL( V3PL.url );
-    } else {
-      V3FO.loadFile( fname );
+      camera = new THREE.PerspectiveCamera( 40, '.($width/$height).', 1, 1000 );
+      camera.position.set( 100, 100, 100 );
+      controls = new THREE.TrackballControls( camera, renderer.domElement );
+
+      loader = new THREE.JSONLoader();
+      loader.load( "'.$url.'", function ( geometry, materials ) {
+        material = new THREE.MeshNormalMaterial();
+        mesh = new THREE.Mesh( geometry, material );
+        scene.add( mesh );
+      } );
     }
 
-    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    document.addEventListener( 'click', onDocumentMouseClick, false );
-    window.addEventListener('mouseup', mouseUp, false);
-  }
+    function animate() {
 
-  function animate() {
-    requestAnimationFrame( animate );
-    renderer.render( scene, camera );
-    controls.update( clock.getDelta() );
-    stats.update();
+      requestAnimationFrame( animate );
+      renderer.render( scene, camera );
+      controls.update();
+      stats.update();
+    }
 
-    if ( !controls.heightSpeed ) return;
-    msg.innerHTML = 'Debug:<br>' +
-      'Freeze: ' + controls.freeze + '<br>' +
-      'lookSpeed: ' + controls.lookSpeed.toFixed(3) + ' movementSpeed: ' + controls.movementSpeed + '<br>' +
-      'lon ' + controls.lon.toFixed(3) + ' lat ' + controls.lat.toFixed(3) + '<br>' +0
-      'movementSpeed ' + controls.movementSpeed + ' actualMoveSpeed '  + actualMoveSpeed.toFixed(2) + '<br>' +
-    '';
-  }
-
-</script>";
-
+  </script>';
+	echo '<div class="controls" style="background: #cccccc; text-align: center; font-weight: bold; padding: 10px; position: absolute; bottom: 0; width: 100%; zIndex: 100">';
+    /* check if fontawesome exists */
+    if (wp_style_is( 'fontawesome' )) {
+      echo '<div class="controls-left" style="float: left; width: 25%"><i class="fa fa-undo fa-2x"></i><br><strong>Rotate [Left Click]</strong></div>
+      <div class="controls-center" style="float: left; width: 25%"><i class="fa fa-search-plus fa-2x"></i><br><strong>Zoom [Mouse Wheel]</strong></div>
+      <div class="controls-right" style="float: left; width: 25%"><i class="fa fa-arrows fa-2x"></i><br><strong>Pan [Right Click]</strong></div>';
+    } else {
+    	echo '<div class="controls-left" style="float: left; width: 25%">Left Click<br>to Rotate.</div>
+    	<div class="controls-center" style="float: left; width: 25%">Mouse Wheel<br>to Zoom.</div>
+    	<div class="controls-right" style="float: left; width: 25%">Right Click<br>to Pan.</div>';
+    }
+    /* check if bootstrap exists */
+    if (wp_style_is( 'bootstrap' )) {
+      echo '<div class="controls-download" style="float: left; width: 25%"><a href="'.$url.'" class="btn btn-primary btn-lg" role="button" target="_blank" download>Download Model</a></div>';
+    } else {
+      echo '<div class="controls-download" style="float: left; width: 25%"><a href="'.$url.'" target="_blank" download>Download Model</a></div>';
+    }
+	
+  echo '</div></div>';
 }
 add_shortcode( 'model', 'ModelViewer' );
 
 function ModelFrame( $atts ) {
+  add_action('wp_enqueue_scripts','modelscripts');
   extract( shortcode_atts( array(
     'type' => 'object',
     'width' => '100%',
