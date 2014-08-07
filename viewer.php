@@ -1,13 +1,20 @@
 <?php 
 /*
 Plugin Name: 3d Model Viewer
-Plugin URI: http://blackreit.com
+Plugin URI: http://turneremanager.com
 Description: Model viewer using three.js for CAD files
-Author: Matthew M. Emma
-Version: 0.1
-Author URI: http://www.blackreit.com
+Author: Matthew M. Emma and Robert Carmosino
+Version: 0.2
+Author URI: http://www.turneremanager.com
 Credits: va3c - http://va3c.github.io/
 */
+/*-------------------------------------------------------*/
+/* Enqueue scripts
+/*-------------------------------------------------------*/
+function modelscripts() {
+  /*Register*/
+
+}
 /*-------------------------------------------------------*/
 /* Add Clientside Location from IP
 /*-------------------------------------------------------*/
@@ -43,8 +50,8 @@ function geoCheckIP($ip) {
   }
   //Array containing all regex-patterns necessary to extract ip-geoinfo from page
   $patterns=array();
-  $patterns["domain"] = '#Domain: (.*?) #i';
-  $patterns["country"] = '#Country: (.*?) #i';
+  $patterns["domain"] = '#Domain: (.*?) #i';
+  $patterns["country"] = '#Country: (.*?) #i';
   $patterns["state"] = '#State/Region: (.*?)<br#i';
   $patterns["town"] = '#City: (.*?)<br#i';
   //Array where results will be stored
@@ -137,9 +144,9 @@ function ModelViewer( $atts ) {
 	echo '<div class="controls" style="background: #cccccc; text-align: center; font-weight: bold; padding: 10px; position: absolute; bottom: 0; width: 100%; zIndex: 100">';
     /* check if fontawesome exists */
     if (wp_style_is( 'fontawesome' )) {
-      echo '<div class="controls-left" style="float: left; width: 25%"><i class="fa fa-undo fa-2x"></i><br><strong>Rotate [Left Click]</strong></div>
+      echo '<div class="controls-left" style="float: left; width: 25%"><i class="fa fa-undo fa-2x"></i><br><strong>Rotate [Left Button]</strong></div>
       <div class="controls-center" style="float: left; width: 25%"><i class="fa fa-search-plus fa-2x"></i><br><strong>Zoom [Mouse Wheel]</strong></div>
-      <div class="controls-right" style="float: left; width: 25%"><i class="fa fa-arrows fa-2x"></i><br><strong>Pan [Right Click]</strong></div>';
+      <div class="controls-right" style="float: left; width: 25%"><i class="fa fa-arrows fa-2x"></i><br><strong>Pan [Right Button]</strong></div>';
     } else {
     	echo '<div class="controls-left" style="float: left; width: 25%">Left Click<br>to Rotate.</div>
     	<div class="controls-center" style="float: left; width: 25%">Mouse Wheel<br>to Zoom.</div>
