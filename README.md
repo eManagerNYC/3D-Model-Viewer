@@ -1,7 +1,7 @@
 3D-Model-Viewer
 ===============
 
-vA3C model viewer for wordpress.
+vA3C model viewer for wordpress.  Demo located at [http://model.turneremanager.com/](http://model.turneremanager.com/)
 
 ## Installation
 
