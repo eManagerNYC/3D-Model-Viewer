@@ -22,7 +22,7 @@ Two Shortcodes
 
 	For example: `[model url="mypath/to/file.js"]`
 
-2.  `[va3c]` (not recommended)
+2.  `[va3c]`
 
 	- `type` can be object or iframe, default is object
 	- `width`
