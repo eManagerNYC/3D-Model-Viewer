@@ -3,6 +3,10 @@
 
 vA3C model viewer for wordpress.  Demo located at [http://model.turneremanager.com/](http://model.turneremanager.com/)
 
+## License
+
+Software is free to use/hack/fork and is license under GPLv2 or higher.  Please share any significant contrbutions to the community. 
+
 ## Installation
 
 1.  Download zip from [repository](https://github.com/TurnereManager/3D-Model-Viewer)
