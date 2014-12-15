@@ -4,36 +4,52 @@ Plugin Name: 3d Model Viewer
 Plugin URI: http://turneremanager.com
 Description: Model viewer using three.js for CAD files
 Author: Matthew M. Emma & Robert Carmosino
-Version: 0.3
+Version: 0.4
 Author URI: http://www.turneremanager.com
 Credits: va3c - http://va3c.github.io/
 */
 /*-------------------------------------------------------*/
 /* Enqueue scripts
 /*-------------------------------------------------------*/
-function modelscripts() {
-  wp_register_script('Detector', plugins_url('assets/Detector.js', __FILE__), false);
-  wp_register_script('Three', plugins_url('assets/three.min.js', __FILE__), false);
-  wp_register_script('TrackballControls', plugins_url('assets/TrackballControls.js', __FILE__), false);
-  wp_register_script('Stats', plugins_url('assets/stats.min.js', __FILE__), false);
-  wp_register_script('jama-materials', plugins_url('assets/jama-materials.js', __FILE__), false);
-  wp_register_script('jama-materials-data', plugins_url('assets/jama-materials-data.js', __FILE__), false);
 
-  wp_enqueue_script('Detector');
-  wp_enqueue_script('Three');
-  wp_enqueue_script('TrackballControls');
-  wp_enqueue_script('Stats');
-  wp_enqueue_script('jama-materials');
-  wp_enqueue_script('jama-materials-data');
-}
+$WPModelViewer = new ModelViewer();
 
-if ( shortcode_exists( 'gallery' ) ) {
-    add_action( 'wp_enqueue_scripts', 'modelscripts' );
-}
-/*-------------------------------------------------------*/
-/* 3d Modelv viewer
-/*-------------------------------------------------------*/
-function ModelViewer( $atts ) {
+class ModelViewer {
+  protected $turl;
+  protected $tkey;
+  protected $murl;
+  protected $mloc;
+  protected $mwidth;
+  protected $mheight;
+  public function __construct() {
+    add_action( 'wp_enqueue_scripts', array($this, 'model_scripts'), 10, 0  );
+    add_action( 'wp_footer', array($this, 'model_fscript'));
+    add_shortcode('model', array($this, 'model_shortcode'));
+  }
+  public function model_scripts() {
+    wp_register_script('Detector', plugins_url('assets/Detector.js', __FILE__), false);
+    wp_register_script('Three', plugins_url('assets/three.min.js', __FILE__), false);
+    wp_register_script('TrackballControls', plugins_url('assets/TrackballControls.js', __FILE__), false);
+    wp_register_script('Stats', plugins_url('assets/stats.min.js', __FILE__), false);
+    wp_register_script('jama-materials', plugins_url('assets/jama-materials.js', __FILE__), false);
+    wp_register_script('jama-materials-data', plugins_url('assets/jama-materials-data.js', __FILE__), false);
+
+    wp_enqueue_script('Detector');
+    wp_enqueue_script('Three');
+    wp_enqueue_script('TrackballControls');
+    wp_enqueue_script('Stats');
+    wp_enqueue_script('jama-materials');
+    wp_enqueue_script('jama-materials-data');
+  }
+public function strLength($str,$len){ 
+      $length = strlen($str); 
+      if($length > $len){ 
+          return substr($str,0,$len).'...'; 
+      }else{ 
+          return $str; 
+      } 
+  } 
+public function model_shortcode( $atts ) {
   extract( shortcode_atts( array(
     'url' => plugins_url('assets/rac_basic_sample_project.rvt.js', __FILE__),
     'loc' => 'New York',
@@ -41,10 +57,48 @@ function ModelViewer( $atts ) {
     'height' => '600'
   ), $atts, 'model' ) );
 
+  $filestring = self::strLength(basename($url, ".js"),10); 
+  $this->tkey = 'em_mdl-'.$filestring;
+  if ( $this->turl == '' ) {
+    $this->turl = $url;
+    set_transient( $tkey, $this->turl, 60 * 60 * 24 );
+  }
+  $this->turl = get_transient( $tkey );
+  $this->murl = $url;
+  $this->mloc = $loc;
+  $this->mwidth = $width;
+  $this->mheight = $height;
 
-  echo '<div id="threejs" style="position: relative; width: '.$width.'; height: '.$height.'; border: 2px solid black">';
-
-  echo '<script>
+  $v = '';
+  $v .= '<div id="threejs" style="position: relative; width: '.$width.'; height: '.$height.'; border: 2px solid black">';
+  $v .= '<div class="controls" style="background: #cccccc; text-align: center; font-weight: bold; padding: 10px; position: absolute; bottom: 0; width: 100%; zIndex: 100">';
+    /* check if fontawesome exists */
+    if (wp_style_is( 'fontawesome' )) {
+      $v .= '<div class="controls-left" style="float: left; width: 15%"><i class="fa fa-undo fa-2x"></i><br><strong>Rotate [Left Button]</strong></div>
+      <div class="controls-center" style="float: left; width: 15%"><i class="fa fa-search-plus fa-2x"></i><br><strong>Zoom [Mouse Wheel]</strong></div>
+      <div class="controls-right" style="float: left; width: 15%"><i class="fa fa-arrows fa-2x"></i><br><strong>Pan [Right Button]</strong></div>';
+    } else {
+      $v .= '<div class="controls-left" style="float: left; width: 15%">Left Click<br>to Rotate.</div>
+      <div class="controls-center" style="float: left; width: 15%">Mouse Wheel<br>to Zoom.</div>
+      <div class="controls-right" style="float: left; width: 15%">Right Click<br>to Pan.</div>';
+    }
+    /* check if bootstrap exists */
+    if (wp_style_is( 'bootstrap' )) {
+      $v .= '<div class="controls-load" style="float: left; width: 25%">
+              <button id="control-load" type="button" class="btn btn-primary btn-lg" onclick="loadFile(\''.$url.'\')">Load Model</button>
+                <div class="progress" id="progress" style="visibility: hidden; display: none"><div class="progress-bar progress-bar-striped active" id="progressbar" role="progressbar" style="width: 0%"><span class="sr-only">Loading</span></div></div>
+              </div>
+              <div class="controls-download" style="float: left; width: 30%"><a id="control-download" type="button" class="btn btn-primary btn-lg" href="'.$url.'" download>Download Model</a></div>';
+    } else {
+      $v .= '<div class="controls-load" style="float: left; width: 25%"><button id="control-load" type="button" onclick="loadFile(\''.$this->turl.'\')">Load Model</button></div>
+      <div class="controls-download" style="float: left; width: 30%"><a id="control-download" type="button" href="'.$url.'" download>Download Model</a></div>';
+    }
+  $v .= '</div></div>';
+  return $v;
+}
+public function model_fscript() {
+    ?>
+    <script id="modelviewer">
     var renderer, stats, scene, camera, controls;
 
     init();
@@ -59,7 +113,7 @@ function ModelViewer( $atts ) {
       } else {
         renderer = new THREE.WebGLRenderer( { alpha: 1, antialias: true, clearColor: 0xffffff } );
       }
-      renderer.setSize( '.$width.', '.$height.' );
+      renderer.setSize( <?php echo $this->mwidth; ?>, <?php echo $this->mheight; ?> );
       renderer.shadowMapEnabled = true;
 
       stats = new Stats();
@@ -69,7 +123,7 @@ function ModelViewer( $atts ) {
       elem.appendChild( renderer.domElement );
       elem.appendChild( stats.domElement );
 
-      camera = new THREE.PerspectiveCamera( 40, '.($width/$height).', 1, 100000 );
+      camera = new THREE.PerspectiveCamera( 40, (<?php echo $this->mwidth; ?>/<?php echo $this->mheight; ?>), 1, 100000 );
       camera.position.set( 15000, 15000, 15000 );
       controls = new THREE.TrackballControls( camera, renderer.domElement );
 
@@ -185,31 +239,7 @@ function ModelViewer( $atts ) {
       stats.update();
     }
 
-  </script>';
-  echo '<div class="controls" style="background: #cccccc; text-align: center; font-weight: bold; padding: 10px; position: absolute; bottom: 0; width: 100%; zIndex: 100">';
-    /* check if fontawesome exists */
-    if (wp_style_is( 'fontawesome' )) {
-      echo '<div class="controls-left" style="float: left; width: 15%"><i class="fa fa-undo fa-2x"></i><br><strong>Rotate [Left Button]</strong></div>
-      <div class="controls-center" style="float: left; width: 15%"><i class="fa fa-search-plus fa-2x"></i><br><strong>Zoom [Mouse Wheel]</strong></div>
-      <div class="controls-right" style="float: left; width: 15%"><i class="fa fa-arrows fa-2x"></i><br><strong>Pan [Right Button]</strong></div>';
-    } else {
-      echo '<div class="controls-left" style="float: left; width: 15%">Left Click<br>to Rotate.</div>
-      <div class="controls-center" style="float: left; width: 15%">Mouse Wheel<br>to Zoom.</div>
-      <div class="controls-right" style="float: left; width: 15%">Right Click<br>to Pan.</div>';
-    }
-    /* check if bootstrap exists */
-    if (wp_style_is( 'bootstrap' )) {
-      echo '<div class="controls-load" style="float: left; width: 25%">';
-        echo '<button id="control-load" type="button" class="btn btn-primary btn-lg" onclick="loadFile(\''.$url.'\')">Load Model</button>';
-        echo '<div class="progress" id="progress" style="visibility: hidden; display: none"><div class="progress-bar progress-bar-striped active" id="progressbar" role="progressbar" style="width: 0%"><span class="sr-only">Loading</span></div></div>';
-      echo '</div>';
-      echo '<div class="controls-download" style="float: left; width: 30%"><a id="control-download" type="button" class="btn btn-primary btn-lg" href="'.$url.'" download>Download Model</a></div>';
-    } else {
-      echo '<div class="controls-load" style="float: left; width: 25%"><button id="control-load" type="button" onclick="loadFile(\''.$url.'\')">Load Model</button></div>';
-      echo '<div class="controls-download" style="float: left; width: 30%"><a id="control-download" type="button" href="'.$url.'" download>Download Model</a></div>';
-    }
-    
-  
-  echo '</div></div>';
+  </script>
+  <?php
+  }
 }
-add_shortcode( 'model', 'ModelViewer' );
